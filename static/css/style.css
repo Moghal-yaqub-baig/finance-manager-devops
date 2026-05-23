@@ -1,0 +1,112 @@
+/* Main Styles */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+html[data-bs-theme="light"] body {
+    background-color: #f8f9fa;
+}
+
+html[data-bs-theme="dark"] body {
+    background-color: #212529;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+/* Dashboard Cards */
+.card {
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+html[data-bs-theme="light"] .card:hover {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+html[data-bs-theme="dark"] .card:hover {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Form Styles */
+.form-control:focus, .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Table Styles */
+html[data-bs-theme="light"] .table th {
+    font-weight: 600;
+    color: #495057;
+}
+
+html[data-bs-theme="dark"] .table th {
+    font-weight: 600;
+    color: #e9ecef;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Report Page Styles */
+#transactions-table {
+    font-size: 0.95rem;
+}
+
+canvas {
+    max-width: 100%;
+}
+
+/* Dark Mode Specific Overrides */
+html[data-bs-theme="dark"] .card-body {
+    color: #e9ecef;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .card-header > div {
+        margin-top: 0.5rem;
+        width: 100%;
+    }
+    
+    .d-flex.gap-2 {
+        flex-wrap: wrap;
+    }
+    
+    .d-flex.gap-2 > * {
+        flex: 1 1 45%;
+        margin-bottom: 0.5rem;
+    }
+    
+    #filter-button {
+        width: 100%;
+    }
+} 

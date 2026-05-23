@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Finance Manager{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2 mb-0">Dashboard</h1>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('add_transaction') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add Transaction
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Income</h5>
+                <h2 class="display-6">{{ currency_symbol }}{{ "{:,.2f}".format(income or 0) }}</h2>
+                <p class="card-text">Total income</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-danger text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Expenses</h5>
+                <h2 class="display-6">{{ currency_symbol }}{{ "{:,.2f}".format(expense or 0) }}</h2>
+                <p class="card-text">Total expenses</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Balance</h5>
+                <h2 class="display-6">{{ currency_symbol }}{{ "{:,.2f}".format(balance or 0) }}</h2>
+                <p class="card-text">Current balance</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card shadow h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Income vs Expenses</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="incomeExpenseChart" width="400" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Transactions</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for transaction in transactions %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ transaction.description }}</h6>
+                            <small class="text-{{ 'success' if transaction.type == 'income' else 'danger' }}">
+                                {{ '+' if transaction.type == 'income' else '-' }}{{ currency_symbol }}{{ "{:,.2f}".format(transaction.amount) }}
+                            </small>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <small class="text-body-secondary">{{ transaction.category }}</small>
+                            <small class="text-body-secondary">{{ transaction.formatted_date }}</small>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="list-group-item text-center py-3">
+                        <p class="text-body-secondary mb-0">No transactions found</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <a href="{{ url_for('view_transactions') }}" class="btn btn-sm btn-outline-primary">View All Transactions</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Budget Overview Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Budget Overview</h5>
+                <a href="{{ url_for('view_budgets') }}" class="btn btn-sm btn-outline-primary">Manage Budgets</a>
+            </div>
+            <div class="card-body">
+                {% if budgets %}
+                <div class="row">
+                    {% for budget in budgets %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <h6 class="card-subtitle text-body-secondary">{{ budget.category }}</h6>
+                                    <span class="badge rounded-pill {{ 'bg-success' if budget.progress < 75 else 'bg-warning' if budget.progress < 100 else 'bg-danger' }}">
+                                        {{ budget.progress }}%
+                                    </span>
+                                </div>
+                                <div class="progress mb-2" style="height: 10px;">
+                                    <div class="progress-bar {{ 'bg-success' if budget.progress < 75 else 'bg-warning' if budget.progress < 100 else 'bg-danger' }}" 
+                                         role="progressbar" 
+                                         style="width: {{ budget.progress }}%;" 
+                                         aria-valuenow="{{ budget.progress }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100"></div>
+                                </div>
+                                <div class="d-flex justify-content-between small text-body-secondary">
+                                    <span>Spent: {{ currency_symbol }}{{ "{:,.2f}".format(budget.spent) }}</span>
+                                    <span>Budget: {{ currency_symbol }}{{ "{:,.2f}".format(budget.amount) }}</span>
+                                </div>
+                                <div class="text-end small {{ 'text-success' if budget.remaining > 0 else 'text-danger' }}">
+                                    <strong>{{ 'Remaining: ' + currency_symbol + "{:,.2f}".format(budget.remaining) if budget.remaining > 0 else 'Over budget: ' + currency_symbol + "{:,.2f}".format(abs(budget.remaining)) }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-body-secondary mb-3">You haven't set up any budgets yet.</p>
+                    <a href="{{ url_for('view_budgets') }}" class="btn btn-primary">Set Up Your First Budget</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Income vs Expense Chart
+        const chartData = {{ chart_data_json|safe }};
+        const ctx = document.getElementById('incomeExpenseChart').getContext('2d');
+        const currencySymbol = '{{ currency_symbol }}';
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: chartData.income,
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Expenses',
+                        data: chartData.expense,
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return currencySymbol + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += currencySymbol + context.parsed.y.toLocaleString();
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 

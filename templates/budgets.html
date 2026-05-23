@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Budgets - Finance Manager{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2 mb-0">Budget Management</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Create/Update Budget</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('add_budget') }}">
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="" selected disabled>Select category</option>
+                            {% for category in categories %}
+                            <option value="{{ category }}">{{ category }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Monthly Budget Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ currency_symbol }}</span>
+                            <input type="number" class="form-control" id="amount" name="amount" min="1" step="0.01" required>
+                        </div>
+                        <div id="amountHelp" class="form-text">Set your maximum monthly spending for this category</div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Save Budget</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Current Budgets</h5>
+            </div>
+            <div class="card-body">
+                {% if budgets %}
+                <div class="row">
+                    {% for budget in budgets %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="card-title mb-0">{{ budget.category }}</h5>
+                                    <form action="{{ url_for('delete_budget', budget_id=budget._id) }}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this budget?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                
+                                <h6 class="card-subtitle mb-2 text-body-secondary">Monthly Budget: {{ currency_symbol }}{{ "{:,.2f}".format(budget.amount) }}</h6>
+                                
+                                <div class="progress mb-2" style="height: 10px;">
+                                    <div class="progress-bar {{ 'bg-success' if budget.progress < 75 else 'bg-warning' if budget.progress < 100 else 'bg-danger' }}" 
+                                         role="progressbar" 
+                                         style="width: {{ budget.progress }}%;" 
+                                         aria-valuenow="{{ budget.progress }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100"></div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between small">
+                                    <span class="text-body-secondary">Spent: {{ currency_symbol }}{{ "{:,.2f}".format(budget.spent) }}</span>
+                                    <span class="{{ 'text-success' if budget.remaining > 0 else 'text-danger' }}">
+                                        <strong>{{ 'Remaining: ' + currency_symbol + "{:,.2f}".format(budget.remaining) if budget.remaining > 0 else 'Over budget: ' + currency_symbol + "{:,.2f}".format(abs(budget.remaining)) }}</strong>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-body-secondary mb-0">You haven't set up any budgets yet.</p>
+                    <p class="text-body-secondary">Use the form on the left to create your first budget.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Budget Tips</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="bi bi-lightbulb fs-2 text-warning"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5>Start with Essential Categories</h5>
+                                <p>Begin by setting budgets for your essential spending like housing, food, and transportation.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="bi bi-graph-up-arrow fs-2 text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5>Adjust Based on Your Spending</h5>
+                                <p>Review your actual spending and adjust your budgets to make them realistic and achievable.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="bi bi-calendar-check fs-2 text-success"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5>Review Monthly</h5>
+                                <p>Check your budget progress regularly and make adjustments as needed to stay on track.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white py-3 d-flex align-items-center">
+                    <h5 class="my-0 flex-grow-1">
+                        <i class="bi bi-journal-text me-2"></i>{{ title }}
+                        <span class="badge bg-light text-dark ms-2">{{ current_page }}/{{ total_pages }}</span>
+                    </h5>
+                    <div class="btn-group">
+                        <a href="{{ url_for('view_logs', type='app', page=1) }}" 
+                           class="btn {% if log_type == 'app' %}btn-light{% else %}btn-outline-light{% endif %}">
+                            <i class="bi bi-code-square me-1"></i>App
+                        </a>
+                        <a href="{{ url_for('view_logs', type='waitress', page=1) }}" 
+                           class="btn {% if log_type == 'waitress' %}btn-light{% else %}btn-outline-light{% endif %}">
+                            <i class="bi bi-hdd-network me-1"></i>Server
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body p-0">
+                    {% if logs %}
+                    <div class="bg-light border-bottom p-3">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-4">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" class="form-control" id="logSearch" placeholder="Search logs...">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select form-select-sm" id="logLevel">
+                                    <option value="">All Levels</option>
+                                    <option value="ERROR">Error</option>
+                                    <option value="WARNING">Warning</option>
+                                    <option value="INFO">Info</option>
+                                    <option value="DEBUG">Debug</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select form-select-sm" id="linesPerPage">
+                                    <option value="50">50 lines</option>
+                                    <option value="100" selected>100 lines</option>
+                                    <option value="200">200 lines</option>
+                                    <option value="500">500 lines</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="window.location.reload()" title="Refresh">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" id="autoRefresh" title="Auto-refresh">
+                                        <i class="bi bi-play-circle"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info" id="downloadLogs" title="Download logs">
+                                        <i class="bi bi-download"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="log-container" style="height: 65vh; overflow-y: auto;">
+                        {% for line in logs %}
+                        <div class="log-line px-3 py-2 border-bottom {% if 'ERROR' in line %}text-danger{% elif 'WARNING' in line %}text-warning{% elif 'INFO' in line %}text-success{% endif %}">
+                            {{ line }}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="bg-light border-top p-3">
+                        <nav aria-label="Log navigation">
+                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                {% if current_page > 1 %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('view_logs', type=log_type, page=1, lines=request.args.get('lines', 100)) }}">
+                                        <i class="bi bi-chevron-double-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('view_logs', type=log_type, page=current_page-1, lines=request.args.get('lines', 100)) }}">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for p in range(max(1, current_page-2), min(total_pages+1, current_page+3)) %}
+                                <li class="page-item {% if p == current_page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('view_logs', type=log_type, page=p, lines=request.args.get('lines', 100)) }}">
+                                        {{ p }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                                
+                                {% if current_page < total_pages %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('view_logs', type=log_type, page=current_page+1, lines=request.args.get('lines', 100)) }}">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('view_logs', type=log_type, page=total_pages, lines=request.args.get('lines', 100)) }}">
+                                        <i class="bi bi-chevron-double-right"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning m-3">No log entries found</div>
+                    {% endif %}
+                </div>
+
+                <div class="card-footer bg-light py-2 d-flex justify-content-between">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Dashboard
+                    </a>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clearLogsModal">
+                            <i class="bi bi-trash me-1"></i>Clear Logs
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Logs Modal -->
+<div class="modal fade" id="clearLogsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Clear Logs</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to clear the {{ log_type }} logs? This action cannot be undone.</p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Logs will be backed up before clearing.
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">Enter admin password to confirm:</label>
+                    <input type="password" class="form-control" id="adminPassword" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmClearLogs">Clear Logs</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .log-line {
+        font-family: 'SFMono-Regular', Menlo, monospace;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        opacity: 0.9;
+        transition: all 0.15s ease;
+    }
+    .log-line:hover {
+        opacity: 1;
+        background-color: rgba(0,0,0,0.02);
+    }
+    [data-bs-theme="dark"] .log-line:hover {
+        background-color: rgba(255,255,255,0.02);
+    }
+    .log-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    .log-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .log-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+    [data-bs-theme="dark"] .log-container::-webkit-scrollbar-thumb {
+        background: #444;
+    }
+    .form-select-sm, .form-control-sm {
+        font-size: 0.875rem !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('logSearch');
+    const logLines = document.querySelectorAll('.log-line');
+    
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const logLevel = document.getElementById('logLevel').value;
+        
+        logLines.forEach(line => {
+            const text = line.textContent.toLowerCase();
+            const matchesSearch = text.includes(searchTerm);
+            const matchesLevel = !logLevel || line.textContent.includes(logLevel);
+            
+            line.style.display = matchesSearch && matchesLevel ? '' : 'none';
+        });
+    });
+    
+    // Log level filter
+    document.getElementById('logLevel').addEventListener('change', function() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const logLevel = this.value;
+        
+        logLines.forEach(line => {
+            const text = line.textContent.toLowerCase();
+            const matchesSearch = text.includes(searchTerm);
+            const matchesLevel = !logLevel || line.textContent.includes(logLevel);
+            
+            line.style.display = matchesSearch && matchesLevel ? '' : 'none';
+        });
+    });
+    
+    // Lines per page
+    document.getElementById('linesPerPage').addEventListener('change', function() {
+        window.location.href = "{{ url_for('view_logs', type=log_type, page=1) }}?lines=" + this.value;
+    });
+    
+    // Auto-refresh
+    let autoRefreshInterval;
+    const autoRefreshBtn = document.getElementById('autoRefresh');
+    let isAutoRefreshing = false;
+    
+    autoRefreshBtn.addEventListener('click', function() {
+        isAutoRefreshing = !isAutoRefreshing;
+        if (isAutoRefreshing) {
+            this.classList.remove('btn-outline-success');
+            this.classList.add('btn-success');
+            this.innerHTML = '<i class="bi bi-pause-circle"></i>';
+            autoRefreshInterval = setInterval(() => window.location.reload(), 5000);
+        } else {
+            this.classList.remove('btn-success');
+            this.classList.add('btn-outline-success');
+            this.innerHTML = '<i class="bi bi-play-circle"></i>';
+            clearInterval(autoRefreshInterval);
+        }
+    });
+    
+    // Download logs
+    document.getElementById('downloadLogs').addEventListener('click', function() {
+        const logContent = Array.from(logLines).map(line => line.textContent).join('\n');
+        const blob = new Blob([logContent], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '{{ log_type }}_logs.txt';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    });
+    
+    // Clear logs
+    document.getElementById('confirmClearLogs').addEventListener('click', function() {
+        const password = document.getElementById('adminPassword').value;
+        
+        fetch("{{ url_for('clear_logs') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                log_type: '{{ log_type }}',
+                password: password
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Failed to clear logs');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to clear logs');
+        });
+    });
+});
+</script>
+{% endblock %}
