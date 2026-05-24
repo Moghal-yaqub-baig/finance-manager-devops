@@ -7,6 +7,11 @@ pipeline {
         IMAGE_TAG      = "${BUILD_NUMBER}"
     }
 
+    tools {
+        // This links directly to the 'latest' auto-installer tool you just saved in Manage Jenkins
+        dockerTool 'latest'
+    }
+
     stages {
         stage('Fetch Source Code') {
             steps {
