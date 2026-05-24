@@ -41,15 +41,15 @@ pipeline {
         stage('Deploy Live App Server') {
             steps {
                 script {
-                    echo "Pulling production artifact and standing up the app on port 5000..."
-                    // Removes older container instances so port 5000 doesn't conflict
+                    echo "Pulling production artifact and standing up the app on the host network..."
+                    // Removes older container instances so there are no naming conflicts
                     sh "docker rm -f finance-manager-container || true"
                     
                     // Pulls down the fresh container image directly from your registry
                     sh "docker pull ${DOCKERHUB_USER}/${IMAGE_NAME}:latest"
                     
-                    // Spins up your web application live on Web Port 5000
-                    sh "docker run -d -p 5000:5000 --name finance-manager-container ${DOCKERHUB_USER}/${IMAGE_NAME}:latest"
+                    // CRITICAL FIX: Backslashes escape the nested quotes so Jenkins can read --network="host" cleanly
+                    sh "docker run -d --network=\"host\" --name finance-manager-container ${DOCKERHUB_USER}/${IMAGE_NAME}:latest"
                 }
             }
         }
