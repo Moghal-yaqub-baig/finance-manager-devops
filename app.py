@@ -1,4 +1,9 @@
 import os
+import ssl
+if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
+    ssl._create_default_https_context = ssl._create_unverified_context
+
+import os
 import bcrypt
 from datetime import datetime, timedelta
 import json
@@ -93,7 +98,7 @@ MONGO_SETTINGS = {
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 def get_mongodb_client():
     try:
-        client = MongoClient(MONGO_URI, **MONGO_SETTINGS)
+        client = MongoClient(MONGO_URI, tlsAllowInvalidCertificates=True, **MONGO_SETTINGS)
         # Test connection
         client.server_info()
         app_logger.info("Connected to MongoDB successfully")
