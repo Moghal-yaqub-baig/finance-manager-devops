@@ -2059,8 +2059,13 @@ if __name__ == '__main__':
         # In production, this should be run with a WSGI server like gunicorn
         app_logger.info("Running in production mode - use with WSGI server")
     else:
-        # For development only
-        app.run(debug=os.environ.get('FLASK_DEBUG', 'False').lower() == 'true')
+        # For development and containerized environments
+        # CRITICAL FIX: Explicitly pass host='0.0.0.0' so it listens to public cloud interfaces
+        app.run(
+            host='0.0.0.0', 
+            port=5000, 
+            debug=os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+        )
     
     # Shutdown email workers gracefully
     for _ in range(len(email_workers)):
