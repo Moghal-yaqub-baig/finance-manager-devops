@@ -7,11 +7,6 @@ pipeline {
         IMAGE_TAG      = "${BUILD_NUMBER}"
     }
 
-    tools {
-        // This links directly to the 'latest' auto-installer tool you just saved in Manage Jenkins
-        dockerTool 'latest'
-    }
-
     stages {
         stage('Fetch Source Code') {
             steps {
@@ -39,6 +34,22 @@ pipeline {
                         sh "docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}"
                         sh "docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:latest"
                     }
+                }
+            }
+        }
+
+        stage('Deploy Live App Server') {
+            steps {
+                script {
+                    echo "Pulling production artifact and standing up the app on port 5000..."
+                    // Removes older container instances so port 5000 doesn't conflict
+                    sh "docker rm -f finance-manager-container || true"
+                    
+                    // Pulls down the fresh container image directly from your registry
+                    sh "docker pull ${DOCKERHUB_USER}/${IMAGE_NAME}:latest"
+                    
+                    // Spins up your web application live on Web Port 5000
+                    sh "docker run -d -p 5000:5000 --name finance-manager-container ${DOCKERHUB_USER}/${IMAGE_NAME}:latest"
                 }
             }
         }
